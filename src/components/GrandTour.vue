@@ -88,7 +88,7 @@
 
 <script>
 export default {
-  name: "HelloWorld",
+  name: "GrandTour",
   props: {
     msg: String
   }

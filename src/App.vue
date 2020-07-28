@@ -1,17 +1,17 @@
 <template>
   <div id="app">
     <img alt="Vue logo" src="./assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js App" />
+    <GrandTour msg="Type Network Grand Tour" />
   </div>
 </template>
 
 <script>
-import HelloWorld from "./components/HelloWorld.vue";
+import GrandTour from "./components/GrandTour.vue";
 
 export default {
-  name: "App",
+  name: "Grand Tour",
   components: {
-    HelloWorld
+    GrandTour
   }
 };
 </script>
