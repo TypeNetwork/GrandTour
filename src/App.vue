@@ -1,28 +1,40 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png" />
-    <GrandTour msg="Type Network Grand Tour" />
+  <div id="grand-tour">
+    <ControlPanel />
+    <MasterLayout />
   </div>
 </template>
 
 <script>
-import GrandTour from "./components/GrandTour.vue";
+import ControlPanel from "./components/ControlPanel.vue";
+import MasterLayout from "./components/MasterLayout.vue";
 
 export default {
-  name: "Grand Tour",
+  name: "GrandTour",
   components: {
-    GrandTour
+    ControlPanel,
+    MasterLayout,
   }
 };
 </script>
 
 <style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+
+@font-face {
+  font-family: "Amstelvar";
+  src: url("./assets/fonts/Amstelvar-Roman-VF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Amstelvar";
+  src: url("./assets/fonts/Amstelvar-Italic-VF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+}
+
+#grand-tour {
+  font-family: system-ui, sans-serif;
 }
 </style>
