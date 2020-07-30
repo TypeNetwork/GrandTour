@@ -31,7 +31,7 @@ export default {
         };
 
         const actualWidth = this.measureText(text);
-        const words = text.trim().split(/[\s-]+/);
+        const words = text.trim().split(/\s+/);
         if (words.length > 1) {
           const wordSpace = (lineWidth - actualWidth) / (words.length - 1);
           if (this.justify || wordSpace < 0) {
