@@ -22,4 +22,5 @@ export default {
   border-radius: 0.5em;
   background: rgba(0, 0, 0, 0.9);
 }
+
 </style>

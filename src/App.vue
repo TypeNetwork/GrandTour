@@ -1,5 +1,6 @@
 <template>
   <div id="grand-tour">
+    <component :is="style" v-text="fontFaces"></component>
     <ControlPanel />
     <MasterLayout />
   </div>

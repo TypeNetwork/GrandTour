@@ -50,69 +50,79 @@ export default {
       this.knuthLines = knuthLines;
     },
     doXtra() {
-      const font = this.$getElementFont(this.$refs.xtraParagraph);
-      if (typeof font !== "object") {
-        console.log("Font not loaded");
-        setTimeout(this.doXtra, 500);
-        return;
-      }
-      if (!font.axes || !font.axes.XTRA) {
-        this.xtraLines = this.knuthLines;
-        return;
-      }
-      
-      let xtraLines = [];
-      const lineWidth = this.$refs.originalParagraph.clientWidth;
-      this.knuthLines.forEach(knuthLine => {
-        const text = knuthLine.text;
-        let line = {
-          text: text,
-          style: {}
-        };
-
-        var measuredWidths = {};
-        var xtraMeasure = xtry => {
-          if (!(xtry in measuredWidths)) {
-            measuredWidths[xtry] = this.measureText(text, {fontVariationSettings: '"XTRA" ' + xtry});
-          }
-          return measuredWidths[xtry];
-        };
-
-        var xtra = font.axes.XTRA.default, xmin = font.axes.XTRA.min, xmax = font.axes.XTRA.max;
-        var minWidth = xtraMeasure(xmin), currentWidth = xtraMeasure(xtra), maxWidth = xtraMeasure(xmax);
-        const fudge = 2;
-        var tries = 10;
-        while (--tries) {
-          if (Math.abs(currentWidth - lineWidth) <= fudge) {
-            break;
-          }
-          if (maxWidth < lineWidth) {
-            xtra = xmax;
-            break;
-          }
-          if (minWidth > lineWidth) {
-            xtra = xmin;
-            break;
-          }
-          
-          if (currentWidth > lineWidth) {
-            xmax = xtra;
-            maxWidth = currentWidth;
-          } else {
-            xmin = xtra;
-            minWidth = currentWidth;
-          }
-          xtra = (xmax + xmin) / 2;
-          currentWidth = xtraMeasure(xtra);
+      this.$store.dispatch('elementFont', this.$refs.xtraParagraph).then(font => {
+        if (!font.axes || !font.axes.XTRA) {
+          throw font.cssName + ": No XTRA axis";
         }
-
-        line.style.fontVariationSettings = '"XTRA" ' + xtra;
-        line.xtra = xtra;
-
-        xtraLines.push(line);
+        
+        let xtraLines = [];
+        var lineCount = this.knuthLines.length;
+        const lineWidth = this.$refs.originalParagraph.clientWidth;
+        this.knuthLines.forEach((knuthLine, i) => {
+          const text = knuthLine.text;
+          let line = {
+            text: text,
+            style: {}
+          };
+  
+          if (i === lineCount-1) {
+            line.xtra = font.axes.XTRA.default;
+            xtraLines.push(line);
+            return;
+          }
+  
+          var measuredWidths = {};
+          var xtraMeasure = xtry => {
+            if (!(xtry in measuredWidths)) {
+              measuredWidths[xtry] = this.measureText(text, {fontVariationSettings: '"XTRA" ' + xtry});
+            }
+            return measuredWidths[xtry];
+          };
+  
+          var xtra = font.axes.XTRA.default, xmin = font.axes.XTRA.min, xmax = font.axes.XTRA.max;
+          var minWidth = xtraMeasure(xmin), currentWidth = xtraMeasure(xtra), maxWidth = xtraMeasure(xmax);
+          const fudge = 2;
+          var tries = 10;
+          while (--tries) {
+            if (Math.abs(currentWidth - lineWidth) <= fudge) {
+              break;
+            }
+            if (maxWidth < lineWidth) {
+              xtra = xmax;
+              break;
+            }
+            if (minWidth > lineWidth) {
+              xtra = xmin;
+              break;
+            }
+            
+            if (currentWidth > lineWidth) {
+              xmax = xtra;
+              maxWidth = currentWidth;
+            } else {
+              xmin = xtra;
+              minWidth = currentWidth;
+            }
+            xtra = (xmax + xmin) / 2;
+            currentWidth = xtraMeasure(xtra);
+          }
+  
+          line.style.fontVariationSettings = '"XTRA" ' + xtra;
+          line.xtra = xtra;
+  
+          xtraLines.push(line);
+        });
+        
+        //don't stretch last line
+        if (xtraLines.length > 0) {
+          xtraLines[xtraLines.length]
+        }
+        
+        this.xtraLines = xtraLines;
+      }).catch(err => {
+        console.log(err);
+        this.xtraLines = this.knuthLines;
       });
-      
-      this.xtraLines = xtraLines;
     },
     doAll() {
       this.doKnuth();

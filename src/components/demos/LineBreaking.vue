@@ -81,7 +81,7 @@
       <span v-for="(line, i) in knuthLines" :key="i" :style="line.style">{{line.text}}</span>
     </p>
 
-    <h4>Knuth + XTRA:</h4>
+    <h4>Knuth <span :style="{textDecoration: xtraLines==knuthLines ? 'line-through' : ''}">+ XTRA:</span></h4>
     <p ref="xtraParagraph" class="xtra" :style="{maxWidth: paragraphWidth + 'em'}">
       <span v-for="(line, i) in xtraLines" :key="i" :style="line.style" :data-xtra="line.xtra">{{line.text}}</span>
     </p>
