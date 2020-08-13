@@ -8,25 +8,28 @@ export default {
     knuthLines: [],
     xtraLines: [],
     paragraphWidth: 20,
-    justify: false,
+    justify: true,
   }),
   computed: {
   },
   methods: {
-    doKnuth() {
-      //"this" will be the vue object
-      const lineWidth = this.$refs.originalParagraph.clientWidth;
-      const items = layoutItemsFromString(this.$refs.originalParagraph.textContent, this.measureText);
+    getKnuthLines(fullText, lineWidth) {
+      const items = layoutItemsFromString(fullText, this.measureText);
       const breakpoints = breakLines(items, lineWidth);
     
       let lines = [];
       for (let i=0, l=breakpoints.length-1; i < l; i++) {
         lines.push(items.slice(breakpoints[i], breakpoints[i+1]).map(item => item.text ?? "").join("").trim());
       }
+      return lines;
+    },
+    doKnuth() {
+      const lineWidth = this.$refs.originalParagraph.clientWidth;
+      const textLines = this.getKnuthLines(this.$refs.originalParagraph.textContent, lineWidth);
       
       var knuthLines = [];
       
-      for (let text of lines) {
+      for (let text of textLines) {
         let line = {
           text,
           style: {},
@@ -55,21 +58,31 @@ export default {
           throw font.cssName + ": No XTRA axis";
         }
         
+        //we're going to do some fudging here. If the XTRA default is in the middle of a range,
+        // we want to break lines to a slightly wider paragraph so that the font can go
+        // narrower as well as wider. So first we measure the width range 
+
+        let lineWidth = this.$refs.originalParagraph.clientWidth;
+
+        let widths = [];
+        for (let xtra of [font.axes.XTRA.min, font.axes.XTRA.default, font.axes.XTRA.max]) {
+          widths.push(this.measureText("How wide is this string?", {fontVariationSettings: '"XTRA" ' + xtra}));
+        }
+
+        let lineFudge = 1;
+        if (widths[0] > 0 && widths[0] < widths[1]) {
+          lineFudge = 1 + (widths[1] / widths[0] - 1) * 0.1;
+        }
+
+        const textLines = this.getKnuthLines(this.$refs.originalParagraph.textContent, lineWidth * lineFudge);
+        
         let xtraLines = [];
-        var lineCount = this.knuthLines.length;
-        const lineWidth = this.$refs.originalParagraph.clientWidth;
-        this.knuthLines.forEach((knuthLine, i) => {
-          const text = knuthLine.text;
+        var lineCount = textLines.length;
+        textLines.forEach((text, i) => {
           let line = {
             text: text,
             style: {}
           };
-  
-          if (i === lineCount-1) {
-            line.xtra = font.axes.XTRA.default;
-            xtraLines.push(line);
-            return;
-          }
   
           var measuredWidths = {};
           var xtraMeasure = xtry => {
@@ -106,7 +119,12 @@ export default {
             xtra = (xmax + xmin) / 2;
             currentWidth = xtraMeasure(xtra);
           }
-  
+
+          //squeeze last line if necessary, but don't stretch
+          if (i === lineCount-1 && xtra > font.axes.XTRA.default) {
+            xtra = font.axes.XTRA.default;
+          }
+
           line.style.fontVariationSettings = '"XTRA" ' + xtra;
           line.xtra = xtra;
   
