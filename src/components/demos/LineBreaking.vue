@@ -52,13 +52,15 @@
 
 <template>
   <div class='line-breaking-demo'>
-    <label>
-      Paragraph width:
-      <input type="range" v-model="paragraphWidth" min="10" max="60" value="20" step="0.1" @input="doAll" @change="doAll"> em
-    </label>
-    <label>
-      Justify? <input type="checkbox" v-model="justify" @change="doAll">
-    </label>
+    <portal to="control-panel">
+      <label>
+        Paragraph width:
+        <input type="range" v-model="paragraphWidth" min="10" max="60" value="20" step="0.1" @input="doAll" @change="doAll"> em
+      </label>
+      <label>
+        Justify? <input type="checkbox" v-model="justify" @change="doAll">
+      </label>
+    </portal>
     <h4>Original:</h4>
     <p ref="originalParagraph" class='original' :class="{ justified: justify }" :style="{maxWidth: paragraphWidth + 'em'}">
       <slot>

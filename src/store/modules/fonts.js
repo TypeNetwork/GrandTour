@@ -41,6 +41,21 @@ export default {
       return getComputedStyle(el).fontFamily.split(",")[0].trim().replace(/['"]/g, '').trim();
     },
   },
+  mutations: {
+    updateFont: function(state, payload) {
+      if (!payload.key) {
+        throw "fonts.updateFont: no key in payload";
+      }
+      if (!(payload.key in state.fonts)) {
+        throw `fonts.updateFont: unknown font "${payload.key}"`;
+      }
+      for (let k in payload) {
+        if (k !== 'key') {
+          state.fonts[payload.key][k] = payload[k];
+        }
+      }
+    },
+  },
   actions: {
     elementFont: (context, el) => {
       const fontFamily = context.getters.elementFontFamily(el);
@@ -62,7 +77,10 @@ export default {
                 fullName: font.name.records.fullName,
               };
               ourFont.axes = font.variationAxes;
-              context.state.fonts[fontFamily].font = ourFont;
+              context.commit('updateFont', {
+                key: fontFamily,
+                font: ourFont,
+              });
               resolve(ourFont);
             } else {
               reject(err);
