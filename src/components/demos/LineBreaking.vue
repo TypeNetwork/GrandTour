@@ -1,9 +1,10 @@
 <style lang="scss">
 .line-breaking-demo {
-  #knuth-width-ruler {
+  .ruler {
     position: absolute;
     visibility: hidden;
     white-space: nowrap;
+    width: auto !important;
   }
   
   label {
@@ -16,35 +17,32 @@
   
   p {
     font-family: AmstelvarRoman, "Comic Sans MS";
-    max-width: 20em;
     border: 1px solid #EEF;
   }
   
-  p.original.justified {
-    text-align: justify;
-  }
-  
-  p.knuth, p.xtra {
+  p.output {
+    position: relative;
     > * {
       white-space: nowrap;
       display: block;
       white-space: nowrap;
-      width: max-content;
-    }
-  }
-  
-  p.xtra [data-xtra] {
-    position: relative;
-    
-    &::after {
-      font-family: Verdana;
-      font-size: 10px;
-      display: block;
-      position: absolute;
-      content: attr(data-xtra);
-      left: calc(100% + 1em);
-      bottom: 0.333em;
-      color: #69F;
+      width: 100%;
+      overflow: visible;
+
+      &[data-label] {
+        position: relative;
+        
+        &::after {
+          font-family: Verdana;
+          font-size: 10px;
+          display: block;
+          position: absolute;
+          content: attr(data-label);
+          left: calc(100% + 1em);
+          bottom: 0.333em;
+          color: #69F;
+        }
+      }
     }
   }
 }
@@ -55,14 +53,19 @@
     <portal to="control-panel">
       <label>
         Paragraph width:
-        <input type="range" v-model="paragraphWidth" min="10" max="60" value="20" step="0.1" @input="doAll" @change="doAll"> em
+        <input type="range" v-model="paragraphWidth" min="10" max="60" value="20" step="0.1" @input="justify" @change="justify"> em
       </label>
       <label>
-        Justify? <input type="checkbox" v-model="justify" @change="doAll">
+        Knuth <input type="checkbox" v-model="doKnuth" @change="justify">
+      </label>
+      <label>
+        Word space <input type="checkbox" v-model="doWordspace" @change="justify">
+      </label>
+      <label>
+        XTRA <input type="checkbox" v-model="doXTRA" @change="justify">
       </label>
     </portal>
-    <h4>Original:</h4>
-    <p ref="originalParagraph" class='original' :class="{ justified: justify }" :style="{maxWidth: paragraphWidth + 'em'}">
+    <p ref="originalText" style="display:none">
       <slot>
         There are many variations of passages of Lorem Ipsum available, 
         but the majority have suffered alteration in some form, by injected humour, 
@@ -77,15 +80,9 @@
         injected humour, or non-characteristic words etc.
       </slot>
     </p>
-    
-    <h4>Knuth + wordspace:</h4>
-    <p ref="knuthParagraph" :class="[ 'knuth', justify ? 'justified' : 'ragged' ]" :style="{maxWidth: paragraphWidth + 'em'}">
-      <span v-for="(line, i) in knuthLines" :key="i" :style="line.style">{{line.text}}</span>
-    </p>
-
-    <h4>Knuth <span :style="{textDecoration: xtraLines==knuthLines ? 'line-through' : ''}">+ XTRA:</span></h4>
-    <p ref="xtraParagraph" class="xtra" :style="{maxWidth: paragraphWidth + 'em'}">
-      <span v-for="(line, i) in xtraLines" :key="i" :style="line.style" :data-xtra="line.xtra">{{line.text}}</span>
+    <p ref="output" class="output" :style="paragraphStyle">
+      <span class='ruler' ref="ruler"></span>
+      <span v-for="(line, i) in finalLines" :key="i" :style="line.style" :data-label="line.label">{{line.text}}</span>
     </p>
   </div>
 </template>
