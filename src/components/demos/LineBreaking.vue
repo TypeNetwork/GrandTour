@@ -47,16 +47,31 @@
     }
   }
 }
+
+#line-breaking-controls {
+  label {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    grid-gap: 1em;
+    align-items: center;
+    justify-items: start;
+
+    input[type=checkbox] {
+      grid-column: 1;
+      grid-row: 1;
+    }
+  }
+}
 </style>
 
 <template>
   <div class='line-breaking-demo'>
     <portal to="control-panel">
-      <form>
+      <form id='line-breaking-controls'>
         <h4>Justification</h4>
         <label>
-          Paragraph width:
-          <input type="range" v-model="paragraphWidth" min="10" max="60" value="20" step="0.1" @input="justify" @change="justify"> em
+          Paragraph width
+          <input type="range" v-model="paragraphWidth" min="10" max="60" value="20" step="0.1" @input="justify" @change="justify">
         </label>
         <label>
           Hyphenate <input type="checkbox" v-model="doHyphenation" @change="justify">
