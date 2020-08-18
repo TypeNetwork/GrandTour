@@ -21,11 +21,14 @@ export default {
   position: fixed;
   top: 1rem;
   right: 1rem;
-  max-width: max-content !important;
   padding: 1rem;
   border-radius: 0.5em;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.75);
   color: white;
+  width: 300px;
+  
+  font-family: Verdana;
+  font-size: 10pt;
   
   header {
     font-size: smaller;
@@ -34,6 +37,8 @@ export default {
     margin: -1rem -1rem 1rem;
     padding: 0.5rem;
   }
+
+
   
   label {
     display: block;

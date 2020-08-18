@@ -71,7 +71,7 @@
         <h4>Justification</h4>
         <label>
           Paragraph width
-          <input type="range" v-model="paragraphWidth" min="10" max="60" value="20" step="0.1" @input="justify" @change="justify">
+          <b-slider v-model="paragraphWidth" :min="10" :max="60" :step="0.1" @input="justify" @change="justify"/>
         </label>
         <label>
           Hyphenate <input type="checkbox" v-model="doHyphenation" @change="justify">
