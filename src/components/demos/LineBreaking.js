@@ -1,14 +1,18 @@
-import { layoutItemsFromString, breakLines /*, positionItems */ } from 'tex-linebreak';
+import { layoutItemsFromString, breakLines, createHyphenator } from 'tex-linebreak';
+import enUsPatterns from 'hyphenation.en-us';
+
+const hyphenator = createHyphenator(enUsPatterns);
 
 export default {
   name: "LineBreaking",
   data: () => ({
-    axes: {},
+    font: null,
     finalLines: [],
     paragraphWidth: 20,
     doKnuth: true,
     doWordspace: true,
     doXTRA: true,
+    doHyphenation: true,
   }),
   computed: {
     paragraphStyle: function() {
@@ -35,12 +39,21 @@ export default {
       return result;
     },
     getKnuthLines(fullText, lineWidth) {
-      const items = layoutItemsFromString(fullText, this.measureText);
+      const items = layoutItemsFromString(fullText, this.measureText, this.doHyphenation ? hyphenator : null);
       const breakpoints = breakLines(items, lineWidth);
-    
+
+      window.items = items;
+      window.breakpoints = breakpoints;
+
       let lines = [];
       for (let i=0, l=breakpoints.length-1; i < l; i++) {
-        lines.push(items.slice(breakpoints[i], breakpoints[i+1]).map(item => item.text ?? "").join("").trim());
+        const lineitems = items.slice(breakpoints[i], breakpoints[i+1]);
+        const breakpoint = items.length > breakpoints[i+1] ? items[breakpoints[i+1]] : null;
+        let line = lineitems.map(item => item.text ?? "").join("").trim();
+        if (breakpoint && breakpoint.type === 'penalty' && breakpoint.width && breakpoint.flagged) {
+          line += '-';
+        }
+        lines.push(line);
       }
       return lines;
     },
@@ -67,111 +80,122 @@ export default {
       }
     },
     justify() {
-      this.$store.dispatch('elementFont', this.$refs.output).then(font => {
-        const lineWidth = this.$refs.output.clientWidth;
-        let knuthLineWidth = lineWidth;
+      const lineWidth = this.$refs.output.clientWidth;
+      let knuthLineWidth = lineWidth;
 
-        const doXTRA = this.doXTRA && font.axes && font.axes.XTRA;
+      const doXTRA = this.doXTRA && this.font && this.font.axes && this.font.axes.XTRA;
 
-        if (doXTRA) {
-          //we're going to do some fudging here. If the XTRA default is in the middle of a range,
-          // we want to break lines to a slightly wider paragraph so that the font can go
-          // narrower as well as wider. So first we measure the width range 
-  
-          let widths = [];
-          for (let xtra of [font.axes.XTRA.min, font.axes.XTRA.default, font.axes.XTRA.max]) {
-            widths.push(this.measureText("How wide is this string?", {fontVariationSettings: '"XTRA" ' + xtra}));
-          }
-  
-          let lineFudge = 1;
-          if (widths[0] > 0 && widths[0] < widths[1]) {
-            lineFudge = 1 + (widths[1] / widths[0] - 1) * 0.1;
-          }
-          
-          knuthLineWidth = lineWidth * lineFudge;
+      if (doXTRA) {
+        //we're going to do some fudging here. If the XTRA default is in the middle of a range,
+        // we want to break lines to a slightly wider paragraph so that the font can go
+        // narrower as well as wider. So first we measure the width range 
+
+        let widths = [];
+        for (let xtra of [this.axisRanges.XTRA[0], this.font.axes.XTRA.default, this.axisRanges.XTRA[1]]) {
+          widths.push(this.measureText("How wide is this string?", {fontVariationSettings: '"XTRA" ' + xtra}));
         }
 
-        const textLines = this.breakLines(this.$refs.originalText.textContent, knuthLineWidth);
+        let lineFudge = 1;
+        if (widths[0] > 0 && widths[0] < widths[1]) {
+          lineFudge = 1 + (widths[1] / widths[0] - 1) * 0.1;
+        }
         
-        let finalLines = [];
-        var lineCount = textLines.length;
-        textLines.forEach((text, i) => {
-          let line = {
-            text: text,
-            style: {}
+        knuthLineWidth = lineWidth * lineFudge;
+      }
+
+      const textLines = this.breakLines(this.$refs.originalText.textContent.trim(), knuthLineWidth);
+      
+      let finalLines = [];
+      var lineCount = textLines.length;
+      textLines.forEach((text, i) => {
+        let line = {
+          text: text,
+          style: {}
+        };
+
+        const isLastLine = i === lineCount-1;
+
+        if (doXTRA) {
+          var measuredWidths = {};
+          var xtraMeasure = xtry => {
+            if (!(xtry in measuredWidths)) {
+              measuredWidths[xtry] = this.measureText(text, {fontVariationSettings: '"XTRA" ' + xtry});
+            }
+            return measuredWidths[xtry];
           };
-
-          const isLastLine = i === lineCount-1;
   
-          if (doXTRA) {
-            var measuredWidths = {};
-            var xtraMeasure = xtry => {
-              if (!(xtry in measuredWidths)) {
-                measuredWidths[xtry] = this.measureText(text, {fontVariationSettings: '"XTRA" ' + xtry});
-              }
-              return measuredWidths[xtry];
-            };
-    
-            var xtra = font.axes.XTRA.default, xmin = font.axes.XTRA.min, xmax = font.axes.XTRA.max;
-            var minWidth = xtraMeasure(xmin), currentWidth = xtraMeasure(xtra), maxWidth = xtraMeasure(xmax);
-            const fudge = 2;
-            var tries = 10;
-            while (--tries) {
-              if (Math.abs(currentWidth - lineWidth) <= fudge) {
-                break;
-              }
-              if (maxWidth < lineWidth) {
-                xtra = xmax;
-                break;
-              }
-              if (minWidth > lineWidth) {
-                xtra = xmin;
-                break;
-              }
-              
-              if (currentWidth > lineWidth) {
-                xmax = xtra;
-                maxWidth = currentWidth;
-              } else {
-                xmin = xtra;
-                minWidth = currentWidth;
-              }
-              xtra = (xmax + xmin) / 2;
-              currentWidth = xtraMeasure(xtra);
+          var xmin = this.axisRanges.XTRA[0],
+            xmax = this.axisRanges.XTRA[1],
+            xtra = Math.max(xmin, Math.min(xmax, this.font.axes.XTRA.default));
+            
+          var minWidth = xtraMeasure(xmin), currentWidth = xtraMeasure(xtra), maxWidth = xtraMeasure(xmax);
+          const fudge = 2;
+          var tries = 10;
+          while (--tries) {
+            if (Math.abs(currentWidth - lineWidth) <= fudge) {
+              break;
             }
-
-            //squeeze last line if necessary, but don't stretch
-            if (isLastLine && xtra > font.axes.XTRA.default) {
-              xtra = font.axes.XTRA.default;
+            if (maxWidth < lineWidth) {
+              xtra = xmax;
+              break;
             }
-  
-            line.style.fontVariationSettings = '"XTRA" ' + xtra;
-            line.xtra = xtra;
-          } //doXTRA
-
-          if (this.doWordspace && !isLastLine) {
-            const actualWidth = this.measureText(text, line.style);
-            const words = text.trim().split(/\s+/);
-            if (words.length > 1) {
-              const wordSpace = (lineWidth - actualWidth) / (words.length - 1);
-              if (this.justify || wordSpace < 0) {
-                line.style.wordSpacing = wordSpace + 'px';
-              }
+            if (minWidth > lineWidth) {
+              xtra = xmin;
+              break;
             }
+            
+            if (currentWidth > lineWidth) {
+              xmax = xtra;
+              maxWidth = currentWidth;
+            } else {
+              xmin = xtra;
+              minWidth = currentWidth;
+            }
+            xtra = (xmax + xmin) / 2;
+            currentWidth = xtraMeasure(xtra);
           }
-  
-          finalLines.push(line);
-        });
-        
-        this.finalLines = finalLines;
-      }).catch(err => {
-        console.log(err);
+
+          //squeeze last line if necessary, but don't stretch
+          const stretchLimit = Math.max(this.axisRanges.XTRA[0], this.font.axes.XTRA.default);
+          if (isLastLine && xtra > stretchLimit) {
+            xtra = stretchLimit;
+          }
+
+          line.style.fontVariationSettings = '"XTRA" ' + xtra;
+          line.xtra = xtra;
+        } //doXTRA
+
+        if (this.doWordspace && !isLastLine) {
+          const actualWidth = this.measureText(text, line.style);
+          const words = text.trim().split(/\s+/);
+          if (words.length > 1) {
+            const wordSpace = (lineWidth - actualWidth) / (words.length - 1);
+            line.style.wordSpacing = wordSpace + 'px';
+          }
+        }
+
+        finalLines.push(line);
       });
+      
+      this.finalLines = finalLines;
     },
   },
   mounted: function() {
-    this.justify();
-    window.addEventListener('resize', this.justify);
+    this.$store.dispatch('elementFont', this.$refs.output).then(font => {
+      this.font = font;
+      let axisRanges = {};
+      Object.keys(this.font.axes).forEach(axis => {
+        axisRanges[axis] = [
+          this.font.axes[axis].min,
+          this.font.axes[axis].max,
+        ];
+      });
+      this.axisRanges = axisRanges;
+      this.justify();
+      window.addEventListener('resize', this.justify);
+    }).catch(err => {
+      console.log(err);
+    });
   },
   beforeDestroy: function() {
     window.removeEventListener('resize', this.justify);

@@ -22,6 +22,7 @@
   
   p.output {
     position: relative;
+    hyphens: none;
     > * {
       white-space: nowrap;
       display: block;
@@ -51,19 +52,31 @@
 <template>
   <div class='line-breaking-demo'>
     <portal to="control-panel">
-      <label>
-        Paragraph width:
-        <input type="range" v-model="paragraphWidth" min="10" max="60" value="20" step="0.1" @input="justify" @change="justify"> em
-      </label>
-      <label>
-        Knuth <input type="checkbox" v-model="doKnuth" @change="justify">
-      </label>
-      <label>
-        Word space <input type="checkbox" v-model="doWordspace" @change="justify">
-      </label>
-      <label>
-        XTRA <input type="checkbox" v-model="doXTRA" @change="justify">
-      </label>
+      <form>
+        <h4>Justification</h4>
+        <label>
+          Paragraph width:
+          <input type="range" v-model="paragraphWidth" min="10" max="60" value="20" step="0.1" @input="justify" @change="justify"> em
+        </label>
+        <label>
+          Hyphenate <input type="checkbox" v-model="doHyphenation" @change="justify">
+        </label>
+        <label>
+          Better line-breaking <input type="checkbox" v-model="doKnuth" @change="justify">
+        </label>
+        <label>
+          Word space <input type="checkbox" v-model="doWordspace" @change="justify">
+        </label>
+        <label>
+          XTRA <input type="checkbox" v-model="doXTRA" @change="justify">
+        </label>
+        <label v-if="doXTRA && font && font.axes.XTRA">
+          XTRA Limits
+          <b-slider :min="font.axes.XTRA.min" :max="font.axes.XTRA.max" v-model="axisRanges.XTRA" @input="justify" @change="justify">
+            <b-slider-tick :value="font.axes.XTRA.default"/>
+          </b-slider>
+        </label>
+      </form>
     </portal>
     <p ref="originalText" style="display:none">
       <slot>
