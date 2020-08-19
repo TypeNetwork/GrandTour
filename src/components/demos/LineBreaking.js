@@ -22,24 +22,8 @@ export default {
     }
   },
   methods: {
-    measureText(text, style) {
-      if (text === " ") {
-        return this.measureText("H H", style) - this.measureText("HH", style);
-      }
-      this.$refs.ruler.textContent = text;
-      this.$refs.ruler.style.cssText = '';
-      if (typeof style === 'object') {
-        Object.keys(style).forEach(k => {
-          this.$refs.ruler.style[k] = style[k];
-        });
-      } else if (typeof style === 'string') {
-        this.$refs.ruler.style.cssText = style;
-      }
-      const result = this.$refs.ruler.getBoundingClientRect().width;
-      return result;
-    },
     getKnuthLines(fullText, lineWidth) {
-      const items = layoutItemsFromString(fullText, this.measureText, this.doHyphenation ? hyphenator : null);
+      const items = layoutItemsFromString(fullText, this.$store.getters.measureTextWidth, this.doHyphenation ? hyphenator : null);
       const breakpoints = breakLines(items, lineWidth);
 
       window.items = items;
@@ -65,7 +49,7 @@ export default {
         var currentLine = "";
         fullText.trim().split(/\s+/).forEach(word => {
           const oneMore = currentLine + (currentLine.length ? " " : "") + word;
-          const currentWidth = this.measureText(oneMore);
+          const currentWidth = this.$store.getters.measureTextWidth(oneMore);
           if (currentWidth > lineWidth) {
             lines.push(currentLine);
             currentLine = word;
@@ -80,6 +64,8 @@ export default {
       }
     },
     justify() {
+      this.$store.commit('setRulerStyles', this.$refs.output);
+
       const lineWidth = this.$refs.output.clientWidth;
       let knuthLineWidth = lineWidth;
 
@@ -92,7 +78,7 @@ export default {
 
         let widths = [];
         for (let xtra of [this.axisRanges.XTRA[0], this.font.axes.XTRA.default, this.axisRanges.XTRA[1]]) {
-          widths.push(this.measureText("How wide is this string?", {fontVariationSettings: '"XTRA" ' + xtra}));
+          widths.push(this.$store.getters.measureTextWidth("How wide is this string?", {fontVariationSettings: '"XTRA" ' + xtra}));
         }
 
         let lineFudge = 1;
@@ -119,7 +105,7 @@ export default {
           var measuredWidths = {};
           var xtraMeasure = xtry => {
             if (!(xtry in measuredWidths)) {
-              measuredWidths[xtry] = this.measureText(text, {fontVariationSettings: '"XTRA" ' + xtry});
+              measuredWidths[xtry] = this.$store.getters.measureTextWidth(text, {fontVariationSettings: '"XTRA" ' + xtry});
             }
             return measuredWidths[xtry];
           };
@@ -166,7 +152,7 @@ export default {
         } //doXTRA
 
         if (this.doWordspace && !isLastLine) {
-          const actualWidth = this.measureText(text, line.style);
+          const actualWidth = this.$store.getters.measureTextWidth(text, line.style);
           const words = text.trim().split(/\s+/);
           if (words.length > 1) {
             const wordSpace = (lineWidth - actualWidth) / (words.length - 1);

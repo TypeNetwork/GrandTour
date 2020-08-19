@@ -8,7 +8,7 @@ export default {
     MasterLayout,
   },
   data: () => ({
-    style: 'style',
+    literallyStyle: 'style',
   }),
   computed: {
     fontFaces() {
@@ -20,6 +20,9 @@ export default {
       return fontfaces.join("\n\n");
     }
   },
+  methods: {
+  },
   mounted: function() {
+    this.$store.commit('createRuler', this.$refs.ruler);
   }
 };

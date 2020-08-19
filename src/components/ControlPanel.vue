@@ -27,8 +27,13 @@ export default {
   color: white;
   width: 300px;
   
-  font-family: Verdana;
   font-size: 10pt;
+  
+  h4 {
+    font-weight: 600;
+    font-size: 9pt;
+    text-transform: uppercase;
+  }
   
   header {
     font-size: smaller;

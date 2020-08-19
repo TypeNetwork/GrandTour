@@ -1,12 +1,5 @@
 <style lang="scss">
 .line-breaking-demo {
-  .ruler {
-    position: absolute;
-    visibility: hidden;
-    white-space: nowrap;
-    width: auto !important;
-  }
-  
   label {
     display: block;
   }
@@ -109,7 +102,6 @@
       </slot>
     </p>
     <p ref="output" class="output" :style="paragraphStyle">
-      <span class='ruler' ref="ruler"></span>
       <span v-for="(line, i) in finalLines" :key="i" :style="line.style" :data-label="line.label">{{line.text}}</span>
     </p>
   </div>
