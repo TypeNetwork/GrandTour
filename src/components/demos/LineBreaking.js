@@ -7,6 +7,7 @@ export default {
   name: "LineBreaking",
   data: () => ({
     font: null,
+    axisRanges: {},
     finalLines: [],
     paragraphWidth: 20,
     doKnuth: true,
@@ -102,45 +103,8 @@ export default {
         const isLastLine = i === lineCount-1;
 
         if (doXTRA) {
-          var measuredWidths = {};
-          var xtraMeasure = xtry => {
-            if (!(xtry in measuredWidths)) {
-              measuredWidths[xtry] = this.$store.getters.measureTextWidth(text, {fontVariationSettings: '"XTRA" ' + xtry});
-            }
-            return measuredWidths[xtry];
-          };
-  
-          var xmin = this.axisRanges.XTRA[0],
-            xmax = this.axisRanges.XTRA[1],
-            xtra = Math.max(xmin, Math.min(xmax, this.font.axes.XTRA.default));
-            
-          var minWidth = xtraMeasure(xmin), currentWidth = xtraMeasure(xtra), maxWidth = xtraMeasure(xmax);
-          const fudge = 2;
-          var tries = 10;
-          while (--tries) {
-            if (Math.abs(currentWidth - lineWidth) <= fudge) {
-              break;
-            }
-            if (maxWidth < lineWidth) {
-              xtra = xmax;
-              break;
-            }
-            if (minWidth > lineWidth) {
-              xtra = xmin;
-              break;
-            }
-            
-            if (currentWidth > lineWidth) {
-              xmax = xtra;
-              maxWidth = currentWidth;
-            } else {
-              xmin = xtra;
-              minWidth = currentWidth;
-            }
-            xtra = (xmax + xmin) / 2;
-            currentWidth = xtraMeasure(xtra);
-          }
-
+          let xtra = this.$store.getters.fitAxisToWidth({font: this.font, axis: 'XTRA', text, width: lineWidth});
+          
           //squeeze last line if necessary, but don't stretch
           const stretchLimit = Math.max(this.axisRanges.XTRA[0], this.font.axes.XTRA.default);
           if (isLastLine && xtra > stretchLimit) {

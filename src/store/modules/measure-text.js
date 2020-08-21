@@ -26,6 +26,56 @@ export default {
       const result = state.ruler.getBoundingClientRect().width;
       return result;
     },
+    fitAxisToWidth: (state, getters) => (payload) => {
+  
+      //bounces around on an axis until a given width is filled by the text
+      // this assumes the ruler has already been configured setRulerStyles
+  
+      if (!payload.font || !payload.axis || !payload.text || !payload.font.axes || !payload.font.axes[payload.axis]) {
+        throw "axisToWidth missing required argument: text, axis, font.axes[axis]";
+      }
+  
+      var measuredWidths = {};
+      var xtraMeasure = xtry => {
+        if (!(xtry in measuredWidths)) {
+          measuredWidths[xtry] = getters.measureTextWidth(payload.text, {fontVariationSettings: `"${payload.axis}" ${xtry}`});
+        }
+        return measuredWidths[xtry];
+      };
+  
+      var xmin = payload.font.axes[payload.axis].min,
+        xmax = payload.font.axes[payload.axis].max,
+        xtra = Math.max(xmin, Math.min(xmax, payload.font.axes[payload.axis].default));
+        
+      var minWidth = xtraMeasure(xmin), currentWidth = xtraMeasure(xtra), maxWidth = xtraMeasure(xmax);
+      const fudge = 2;
+      var tries = 10;
+      while (--tries) {
+        if (Math.abs(currentWidth - payload.width) <= fudge) {
+          break;
+        }
+        if (maxWidth <= payload.width-fudge) {
+          xtra = xmax;
+          break;
+        }
+        if (minWidth >= payload.width+fudge) {
+          xtra = xmin;
+          break;
+        }
+        
+        if (currentWidth > payload.width) {
+          xmax = xtra;
+          maxWidth = currentWidth;
+        } else {
+          xmin = xtra;
+          minWidth = currentWidth;
+        }
+        xtra = (xmax + xmin) / 2;
+        currentWidth = xtraMeasure(xtra);
+      }
+      
+      return xtra;
+    },
   },
   mutations: {
     createRuler(state, ruler) {

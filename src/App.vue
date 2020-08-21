@@ -17,7 +17,7 @@
 
 <template>
   <div id="grand-tour">
-    <div id='one-to-ruler-them-all' ref="rulerBase"><span ref="ruler"></span></div>
+    <div id='one-to-ruler-them-all' ref="ruler"><span></span></div>
     <component :is="literallyStyle" v-text="fontFaces"></component>
     <ControlPanel />
     <MasterLayout />
