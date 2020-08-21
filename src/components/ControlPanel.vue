@@ -1,7 +1,7 @@
 <template>
   <div id="control-panel" v-drag="{handle: '#control-panel header'}">
     <header>Control Panel</header>
-    <portal-target name="control-panel">
+    <portal-target name="control-panel" multiple>
     </portal-target>
   </div>
 </template>
@@ -43,10 +43,17 @@ export default {
     padding: 0.5rem;
   }
 
-
-  
   label {
-    display: block;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    grid-gap: 1em;
+    align-items: center;
+    justify-items: start;
+
+    input[type=checkbox] {
+      grid-column: 1;
+      grid-row: 1;
+    }
   }
 }
 

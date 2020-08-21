@@ -40,21 +40,6 @@
     }
   }
 }
-
-#line-breaking-controls {
-  label {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    grid-gap: 1em;
-    align-items: center;
-    justify-items: start;
-
-    input[type=checkbox] {
-      grid-column: 1;
-      grid-row: 1;
-    }
-  }
-}
 </style>
 
 <template>
@@ -64,7 +49,7 @@
         <h4>Justification</h4>
         <label>
           Paragraph width
-          <b-slider v-model="paragraphWidth" :min="10" :max="60" :step="0.1" @input="justify" @change="justify"/>
+          <b-slider v-model="paragraphWidth" :min="10" :max="60" :step="0.1" :tooltip="false" @input="justify" @change="justify"/>
         </label>
         <label>
           Hyphenate <input type="checkbox" v-model="doHyphenation" @change="justify">

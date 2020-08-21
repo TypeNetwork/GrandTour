@@ -31,8 +31,8 @@ export default {
       //bounces around on an axis until a given width is filled by the text
       // this assumes the ruler has already been configured setRulerStyles
   
-      if (!payload.font || !payload.axis || !payload.text || !payload.font.axes || !payload.font.axes[payload.axis]) {
-        throw "axisToWidth missing required argument: text, axis, font.axes[axis]";
+      if (!payload.font || !payload.axis || !payload.text || !payload.width || !payload.font.axes || !payload.font.axes[payload.axis]) {
+        throw "axisToWidth missing required argument: text, width, axis, font.axes[axis]";
       }
   
       var measuredWidths = {};

@@ -1,3 +1,9 @@
+<style scoped lang="scss">
+  #master-layout {
+    font-family: AmstelvarRoman, "Comic Sans MS";
+  }
+</style>
+
 <template>
   <div id="master-layout">
     <HeadlineFitting>Headline Fitting</HeadlineFitting>
@@ -34,8 +40,3 @@ export default {
 };
 </script>
 
-<style scoped lang="scss">
-  #master-layout {
-    font-family: Amstelvar;
-  }
-</style>
